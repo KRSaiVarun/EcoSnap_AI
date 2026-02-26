@@ -21,31 +21,48 @@ export async function registerRoutes(
       const { decision } = api.decisions.analyze.input.parse(req.body);
 
       const prompt = `
-        You are GreenPulse, an AI-powered sustainability micro-decision assistant.
+        You are GreenPulse AI, a sustainability impact analyzer.
 
-        Help users make better daily lifestyle choices by suggesting eco-friendly alternatives and estimating carbon impact differences.
+        Your job:
+        1. Identify the user's decision category: Food, Transport, or Shopping.
+        2. Extract quantities (distance, number of items, frequency).
+        3. Estimate carbon emissions using realistic global average emission factors.
+        4. Compare with a greener alternative.
+        5. Calculate:
+           - Estimated CO2 of user's choice (kg)
+           - Estimated CO2 of better alternative (kg)
+           - CO2 saved
+        6. Classify impact:
+           - Low (<1kg)
+           - Medium (1–5kg)
+           - High (>5kg)
 
-        You analyze small daily decisions related to: food, transport, shopping, or other.
+        Use these average emission factors:
+        FOOD (kg CO2 per kg food):
+        - Beef: 27, Chicken: 6.9, Rice: 4, Vegetables: 2, Lentils: 0.9, Milk (1 liter): 3
+        TRANSPORT (kg CO2 per km):
+        - Car (petrol): 0.2, Bus: 0.1, Train/Metro: 0.05, Bike: 0, Walk: 0, Flight: 0.15
+        SHOPPING (approx per item):
+        - Fast fashion t-shirt: 7, Jeans: 20, Smartphone: 70, Plastic bottle: 0.1, Reusable bottle: 2, Thrift clothing: 2
 
         Rules:
-        - Be concise and practical.
-        - Use realistic but simple carbon estimates (in kg).
-        - Never explain your reasoning.
-        - Never return text outside JSON.
-        - Never return null values.
-        - All numbers must be positive.
-        - Round all numbers to 1 decimal place.
-        - If information is unclear, make reasonable assumptions.
-        - Keep encouragement messages short and positive.
+        - Respond in structured JSON format only.
+        - All numeric CO2 values must be returned as NUMBERS in the JSON (they will be converted to strings for storage).
+        - Rounds to 1 decimal place.
+        - sustainability_score: 10 (80%+ reduction), 7 (50-79%), 5 (30-49%), 3 (<30%)
 
-        Analysis steps:
-        1. Identify the user's original action.
-        2. Classify it into one category: food, transport, shopping, or other.
-        3. Estimate the original action's CO2 impact (kg).
-        4. Suggest ONE eco-friendly alternative.
-        5. Estimate eco alternative CO2 (kg).
-        6. Calculate: co2_saved_kg = original_co2_kg - eco_co2_kg, percentage_reduction
-        7. Assign sustainability_score: 10 (80%+ reduction), 7 (50-79%), 5 (30-49%), 3 (<30%)
+        Expected JSON keys:
+        {
+          "category": "food" | "transport" | "shopping" | "other",
+          "original_action": string,
+          "original_co2_kg": number,
+          "eco_alternative": string,
+          "eco_co2_kg": number,
+          "co2_saved_kg": number,
+          "percentage_reduction": number,
+          "sustainability_score": number,
+          "encouragement_message": string
+        }
 
         User decision: "${decision}"
       `;
@@ -62,12 +79,12 @@ export async function registerRoutes(
       const mappedData = {
         category: parsedResponse.category || "other",
         originalAction: parsedResponse.original_action || decision,
-        originalCo2Kg: String(parsedResponse.original_co2_kg || 0),
+        originalCo2Kg: String(parsedResponse.original_co2_kg ?? 0),
         ecoAlternative: parsedResponse.eco_alternative || "None",
-        ecoCo2Kg: String(parsedResponse.eco_co2_kg || 0),
-        co2SavedKg: String(parsedResponse.co2_saved_kg || 0),
-        percentageReduction: String(parsedResponse.percentage_reduction || 0),
-        sustainabilityScore: parsedResponse.sustainability_score || 3,
+        ecoCo2Kg: String(parsedResponse.eco_co2_kg ?? 0),
+        co2SavedKg: String(parsedResponse.co2_saved_kg ?? 0),
+        percentageReduction: String(parsedResponse.percentage_reduction ?? 0),
+        sustainabilityScore: Number(parsedResponse.sustainability_score ?? 3),
         encouragementMessage: parsedResponse.encouragement_message || "Every little bit helps!",
       };
       
