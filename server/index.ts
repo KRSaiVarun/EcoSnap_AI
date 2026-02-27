@@ -1,5 +1,9 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express, { NextFunction, type Request, Response } from "express";
 import { createServer } from "http";
+import { extractToken, verifyToken } from "./auth";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 
@@ -9,6 +13,10 @@ const httpServer = createServer(app);
 declare module "http" {
   interface IncomingMessage {
     rawBody: unknown;
+    user?: {
+      userId: string;
+      email: string;
+    };
   }
 }
 
@@ -56,6 +64,29 @@ app.use((req, res, next) => {
     }
   });
 
+  next();
+});
+
+// Auth middleware - extracts and verifies JWT token if present
+app.use((req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader) {
+    try {
+      const token = extractToken(authHeader);
+      if (token) {
+        const payload = verifyToken(token);
+        if (payload) {
+          req.user = {
+            userId: payload.userId,
+            email: payload.email,
+          };
+        }
+      }
+    } catch (error) {
+      // Token invalid, but don't fail - just continue without user context
+      // Protected routes will check for req.user
+    }
+  }
   next();
 });
 

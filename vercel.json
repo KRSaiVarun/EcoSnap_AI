@@ -1,4 +1,6 @@
 {
+  "projectId": "prj_ecosnap_ai",
+  "orgId": "team_krsaivaruns",
   "buildCommand": "npm run vercel-build",
   "outputDirectory": "dist",
   "devCommand": "npm run dev",
