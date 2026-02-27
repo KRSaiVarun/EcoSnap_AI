@@ -1,16 +1,20 @@
 {
-  "orgId": "team_krsaivaruns",
-  "buildCommand": "npm run vercel-build",
+  "version": 2,
+  "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "devCommand": "npm run dev",
-  "routes": [
-    {
-      "source": "^/(?!api).*",
-      "dest": "/dist/public"
-    },
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "rewrites": [
     {
       "source": "/api/(.*)",
-      "dest": "/api"
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
