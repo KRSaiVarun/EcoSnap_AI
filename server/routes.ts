@@ -1,21 +1,21 @@
+import { api } from "@shared/routes";
+import { insertDecisionSchema } from "@shared/schema";
 import type { Express } from "express";
 import type { Server } from "http";
-import { storage } from "./storage";
-import { api } from "@shared/routes";
-import { z } from "zod";
 import OpenAI from "openai";
-import { insertDecisionSchema } from "@shared/schema";
+import { z } from "zod";
+import { storage } from "./storage";
 
 const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+  apiKey:
+    process.env.AI_INTEGRATIONS_OPENAI_API_KEY || "sk-test-key-for-development",
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
 });
 
 export async function registerRoutes(
   httpServer: Server,
-  app: Express
+  app: Express,
 ): Promise<Server> {
-  
   app.post(api.decisions.analyze.path, async (req, res) => {
     try {
       const { decision } = api.decisions.analyze.input.parse(req.body);
@@ -85,20 +85,21 @@ export async function registerRoutes(
         co2SavedKg: String(parsedResponse.co2_saved_kg ?? 0),
         percentageReduction: String(parsedResponse.percentage_reduction ?? 0),
         sustainabilityScore: Number(parsedResponse.sustainability_score ?? 3),
-        encouragementMessage: parsedResponse.encouragement_message || "Every little bit helps!",
+        encouragementMessage:
+          parsedResponse.encouragement_message || "Every little bit helps!",
       };
-      
+
       const validatedData = insertDecisionSchema.parse(mappedData);
 
       const savedDecision = await storage.createDecision(validatedData);
-      
+
       res.status(200).json(savedDecision);
     } catch (err) {
       console.error(err);
       if (err instanceof z.ZodError) {
         return res.status(400).json({
           message: err.errors[0]?.message || "Validation Error",
-          field: err.errors[0]?.path.join('.'),
+          field: err.errors[0]?.path.join("."),
         });
       }
       res.status(500).json({ message: "Internal server error" });
@@ -121,6 +122,12 @@ export async function registerRoutes(
 }
 
 async function seedDatabase() {
+  // Skip seeding if DATABASE_URL is not set (development without local database)
+  if (!process.env.DATABASE_URL) {
+    console.log("⚠️  Skipping database seeding - DATABASE_URL not set");
+    return;
+  }
+
   try {
     const existingDecisions = await storage.getDecisions();
     if (existingDecisions.length === 0) {
@@ -133,7 +140,8 @@ async function seedDatabase() {
         co2SavedKg: "1.8",
         percentageReduction: "60.0",
         sustainabilityScore: 7,
-        encouragementMessage: "Switching to a vegetarian option significantly lowers your carbon footprint!"
+        encouragementMessage:
+          "Switching to a vegetarian option significantly lowers your carbon footprint!",
       });
       await storage.createDecision({
         category: "transport",
@@ -144,10 +152,13 @@ async function seedDatabase() {
         co2SavedKg: "3.4",
         percentageReduction: "75.5",
         sustainabilityScore: 7,
-        encouragementMessage: "Great job! Public transport is a huge win for the environment."
+        encouragementMessage:
+          "Great job! Public transport is a huge win for the environment.",
       });
+      console.log("✅ Database seeded successfully");
     }
   } catch (e) {
-    console.error("Seeding failed", e);
+    console.warn("⚠️  Database seeding failed:", (e as Error).message);
+    // Don't crash the server if seeding fails
   }
 }

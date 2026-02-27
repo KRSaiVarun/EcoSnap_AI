@@ -1,0 +1,14 @@
+# Vercel Deployment Ignore Files
+
+node_modules/
+.git
+.gitignore
+README.md
+.env.example
+\*.md
+.DS_Store
+.replit
+replit.nix
+replit_integrations/
+script/
+client/public/
