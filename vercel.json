@@ -2,5 +2,14 @@
   "buildCommand": "npm run vercel-build",
   "outputDirectory": "dist",
   "devCommand": "npm run dev",
-  "framework": "express"
+  "routes": [
+    {
+      "source": "^/(?!api).*",
+      "dest": "/dist/public"
+    },
+    {
+      "source": "/api/(.*)",
+      "dest": "/api"
+    }
+  ]
 }
