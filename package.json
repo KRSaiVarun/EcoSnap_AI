@@ -5,9 +5,9 @@
   "license": "MIT",
   "scripts": {
     "dev": "cross-env NODE_ENV=development tsx server/index.ts",
-    "build": "echo 'Building...' && npm run check",
-    "vercel-build": "echo 'Building client and server...' && node -e \"console.log('Build complete')\"",
-    "start": "cross-env NODE_ENV=production node dist/index.cjs",
+    "build": "node build.js",
+    "vercel-build": "node build.js",
+    "start": "cross-env NODE_ENV=production tsx server/index.ts",
     "check": "tsc",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate"
