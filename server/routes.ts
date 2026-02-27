@@ -21,7 +21,7 @@ export async function registerRoutes(
       const { decision } = api.decisions.analyze.input.parse(req.body);
 
       const prompt = `
-        You are GreenPulse AI, a sustainability impact analyzer.
+        You are EcoSnap_AI, a sustainability impact analyzer.
 
         Your job:
         1. Identify the user's decision category: Food, Transport, or Shopping.

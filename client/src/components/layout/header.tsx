@@ -10,7 +10,7 @@ export function Header() {
             <Leaf className="w-5 h-5 text-white" />
           </div>
           <span className="text-xl font-bold font-display text-gradient">
-            GreenPulse
+            EcoSnap_AI
           </span>
         </Link>
         
