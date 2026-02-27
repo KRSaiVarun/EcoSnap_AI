@@ -500,13 +500,13 @@ export async function registerRoutes(
   app.get(api.chat.history.path, async (req: Request, res) => {
     try {
       const userId = req.user?.userId || "anonymous";
-      const history = ecoAgent.getConversationHistory(userId);
+      const history = await ecoAgent.getConversationHistory(userId);
 
       res.status(200).json({
         messages: history.map((msg) => ({
           role: msg.role,
           content: msg.content,
-          timestamp: msg.timestamp?.toISOString() || new Date().toISOString(),
+          timestamp: msg.timestamp || new Date().toISOString(),
         })),
       });
     } catch (error) {
@@ -525,7 +525,7 @@ export async function registerRoutes(
   app.post(api.chat.clear.path, async (req: Request, res) => {
     try {
       const userId = req.user?.userId || "anonymous";
-      ecoAgent.clearHistory(userId);
+      await ecoAgent.clearHistory(userId);
 
       res.status(200).json({
         message: "Conversation history cleared",
