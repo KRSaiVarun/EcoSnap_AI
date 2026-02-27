@@ -84,6 +84,7 @@ Be conversational, engaging, and focus on practical solutions.`;
   async processMessage(
     userMessage: string,
     userId: string = "anonymous",
+    preferences?: any,
   ): Promise<AgentResponse> {
     try {
       // Fetch or create conversation in Supabase
@@ -125,6 +126,11 @@ Be conversational, engaging, and focus on practical solutions.`;
         history = [this.systemMessage];
       }
 
+      // Store preferences if provided in this call
+      if (preferences) {
+        await this.setUserPreferences(userId, preferences);
+      }
+
       // Enhance message with user preferences if available
       let enhancedMessage = userMessage;
       if (this.userPreferences.has(userId)) {
@@ -161,7 +167,17 @@ Be conversational, engaging, and focus on practical solutions.`;
           max_tokens: 800,
         });
 
-        const reply = response.choices[0]?.message?.content || "";
+        let reply = response.choices[0]?.message?.content || "";
+
+        // log debugging information if something looks off
+        if (!reply.trim()) {
+          console.warn(
+            "OpenAI returned empty reply, falling back. Full response:",
+            JSON.stringify(response, null, 2),
+          );
+          // treat as an error so we return a fallback message below
+          return this.getFallbackResponse(userMessage);
+        }
 
         // Add assistant response to history
         history.push({
